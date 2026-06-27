@@ -162,23 +162,9 @@ def extract():
     except Exception as e:
         return jsonify({"error": f"Failed to render PDF page: {str(e)}"}), 500
 
-    prompt = """You are an expert at extracting structured data from PDF document images.
+   prompt = """You are an expert at extracting tables from PDF document images.
 
-Analyze this PDF page image and extract ALL tabular or structured data you can find.
-
-A "table" is ANY data arranged in rows and columns — it does NOT require visible grid lines or borders. This includes:
-- Classic tables with borders/lines
-- Financial reports and budgets (columns of numbers aligned under headings)
-- Government/municipal financial statements
-- Balance sheets, income statements, cash flow tables
-- Budget vs. actual comparison reports
-- Any text where rows of data align vertically into implicit columns
-- Lists with multiple columns of associated values
-- Reports with labels on the left and numbers on the right across multiple columns
-
-For example, a budget report like:
-  "Property taxes    211,381    205,838    209,809    218,161"
-IS a table row — extract it even without visible grid lines.
+Analyze this PDF page image and extract ALL tables you can find.
 
 Return ONLY a JSON array (no markdown, no extra text) in this exact format:
 [
@@ -193,14 +179,14 @@ Return ONLY a JSON array (no markdown, no extra text) in this exact format:
 ]
 
 Rules:
-- Extract ALL structured/columnar data on the page, even without visible borders
-- Infer column headers from context (e.g. "Actual 2022", "Budget 2023", "Estimate 2023")
-- Preserve all text and numbers exactly as shown
-- Numbers: preserve formatting (e.g. "$1,234.56", "42%", "(1,500)" for negatives)
+- Extract every table on the page, even partial ones
+- Preserve all text exactly as shown
+- If a cell spans multiple columns, repeat the value or use empty strings
+- If no tables found, return: []
+- Numbers: preserve formatting (e.g. "$1,234.56", "42%")
 - Empty cells: use empty string ""
-- If a section header separates row groups (e.g. "Revenues:", "Expenditures:"), include it as a row with empty other columns
-- Only return [] if the page contains NO structured data whatsoever (e.g. pure prose paragraph)
 - Do NOT include any explanation, only the JSON array"""
+
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
